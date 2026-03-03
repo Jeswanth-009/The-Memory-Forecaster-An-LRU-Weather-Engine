@@ -68,6 +68,3 @@ memory_forecaster/
 4. Run the backend server: `uvicorn backend.main:app --reload`
 5. Open `frontend/index.html` in your web browser.
 
-```
-
-```
