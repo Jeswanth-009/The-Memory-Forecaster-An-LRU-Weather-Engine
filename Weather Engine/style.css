@@ -1,0 +1,429 @@
+/* --- General Setup & Variables --- */
+:root {
+    --primary-bg: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
+    --card-bg: rgba(255, 255, 255, 0.95);
+    --sidebar-bg: rgba(224, 242, 241, 0.9);
+    --text-color: #2e2e2e;
+    --subtle-text-color: #555;
+    --primary-accent: #ff6b6b;
+    --primary-accent-hover: #ff5252;
+    --hit-bg: #81c784;
+    --hit-text: #2e7d32;
+    --miss-bg: #ffb74d;
+    --miss-text: #f57c00;
+    --error-color: #e57373;
+    --border-color: #ffe082;
+    --shadow: 0 8px 32px rgba(255, 193, 7, 0.3);
+    --backdrop-filter: blur(10px);
+}
+
+body {
+    font-family: 'Roboto', sans-serif;
+    background: var(--primary-bg);
+    background-attachment: fixed;
+    color: var(--text-color);
+    margin: 0;
+    padding: 2rem;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+}
+
+.container {
+    width: 100%;
+    max-width: 960px;
+}
+
+/* --- Header & Search Form --- */
+header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+header h1 {
+    margin: 0;
+    font-weight: 700;
+}
+
+header p {
+    margin: 0.25rem 0 0;
+    color: var(--subtle-text-color);
+}
+
+#weather-form {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+}
+
+#city-input {
+    flex-grow: 1;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+#city-input:focus {
+    outline: none;
+    border-color: var(--primary-accent);
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+}
+
+#weather-form button {
+    padding: 0.75rem 1.5rem;
+    background-color: var(--primary-accent);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+}
+
+#weather-form button:hover {
+    background-color: var(--primary-accent-hover);
+    box-shadow: 0 6px 20px rgba(255, 82, 82, 0.6);
+}
+
+/* --- Main Content Layout --- */
+.content-area {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 2rem;
+}
+
+/* --- Weather Card --- */
+.weather-card {
+    background: rgba(220, 220, 220, 0.95);
+    backdrop-filter: var(--backdrop-filter);
+    -webkit-backdrop-filter: var(--backdrop-filter);
+    padding: 2rem;
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    text-align: center;
+    position: relative;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    animation: fadeIn 0.5s ease-in;
+    box-shadow: 0 8px 32px rgba(255, 193, 7, 0.3), 0 0 20px rgba(255, 193, 7, 0.1);
+}
+
+.weather-icon {
+    font-size: 4rem;
+    margin: 1rem 0;
+    animation: bounceIn 0.6s ease-out;
+}
+
+#city-name {
+    margin: 1rem 0 0.25rem;
+    font-size: 2.5rem;
+    font-weight: 500;
+}
+
+.temperature-display {
+    font-size: 4.5rem;
+    font-weight: 300;
+    margin: 1rem 0;
+    color: var(--primary-accent);
+    text-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
+}
+
+.subtle-text {
+    color: var(--subtle-text-color);
+    font-size: 1.25rem;
+}
+
+.error-text {
+    color: var(--error-color);
+    font-weight: 500;
+    min-height: 1.2em; /* Reserve space to prevent layout shift */
+}
+
+/* --- Status Badges --- */
+#status-badge-container {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+}
+
+.badge {
+    padding: 0.4rem 0.8rem;
+    border-radius: 1rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.cache-hit {
+    background-color: var(--hit-bg);
+    color: var(--hit-text);
+}
+
+.cache-miss {
+    background-color: var(--miss-bg);
+    color: var(--miss-text);
+}
+
+/* --- Cache Sidebar --- */
+#cache-sidebar {
+    background: var(--sidebar-bg);
+    backdrop-filter: var(--backdrop-filter);
+    -webkit-backdrop-filter: var(--backdrop-filter);
+    padding: 1.5rem;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+#cache-sidebar h3 {
+    margin-top: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.sidebar-subtitle {
+    font-size: 0.85rem;
+    color: var(--subtle-text-color);
+    margin-top: -0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+#cache-list {
+    list-style-type: none;
+    padding-left: 0;
+    margin: 0;
+}
+
+#cache-list li {
+    background-color: var(--card-bg);
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.5rem;
+    border-radius: 6px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    text-transform: capitalize;
+}
+
+.cache-item-placeholder {
+    background-color: transparent !important;
+    box-shadow: none !important;
+    color: var(--subtle-text-color);
+    font-style: italic;
+}
+
+/* --- Todo Sidebar --- */
+#todo-sidebar {
+    background: var(--sidebar-bg);
+    backdrop-filter: var(--backdrop-filter);
+    -webkit-backdrop-filter: var(--backdrop-filter);
+    padding: 1.5rem;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+#todo-sidebar h3 {
+    margin-top: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+#todo-form {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+#todo-input {
+    flex-grow: 1;
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 0.9rem;
+}
+
+#todo-form button {
+    padding: 0.5rem 1rem;
+    background-color: #4caf50;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+#todo-form button:hover {
+    background-color: #45a049;
+}
+
+#todo-list {
+    list-style-type: none;
+    padding-left: 0;
+    margin: 0;
+}
+
+#todo-list li {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background-color: var(--card-bg);
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.5rem;
+    border-radius: 6px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+#todo-list input[type="checkbox"] {
+    margin: 0;
+}
+
+#todo-list .todo-text {
+    flex-grow: 1;
+}
+
+#todo-list .todo-text.completed {
+    text-decoration: line-through;
+    color: var(--subtle-text-color);
+}
+
+#todo-list button {
+    background: none;
+    border: none;
+    color: var(--error-color);
+    cursor: pointer;
+    font-size: 1.2rem;
+}
+
+/* --- Responsive Design --- */
+@media (max-width: 1024px) {
+    .content-area {
+        grid-template-columns: 1fr 1fr;
+    }
+    #todo-sidebar {
+        order: 3;
+    }
+}
+
+@media (max-width: 768px) {
+    .content-area {
+        grid-template-columns: 1fr;
+    }
+    #cache-sidebar {
+        order: 3;
+    }
+    #todo-sidebar {
+        order: 4;
+    }
+}
+
+/* --- Animations --- */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes bounceIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.3);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.05);
+    }
+    70% {
+        transform: scale(0.9);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes rain {
+    0% {
+        transform: translateY(-100vh);
+    }
+    100% {
+        transform: translateY(100vh);
+    }
+}
+
+/* --- Weather Themes --- */
+.sunny-theme {
+    background: linear-gradient(135deg, #ffab40 0%, #ff6f00 100%);
+}
+
+.clear-theme {
+    background: linear-gradient(135deg, #81c784 0%, #4caf50 100%);
+}
+
+.partly-cloudy-theme {
+    background: linear-gradient(135deg, #ffb74d 0%, #ff9800 100%);
+}
+
+.cloudy-theme {
+    background: linear-gradient(135deg, #e0e0e0 0%, #bdbdbd 100%);
+}
+
+.rainy-theme {
+    background: linear-gradient(135deg, #4a90e2 0%, #1e3c72 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.rainy-theme::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(255, 255, 255, 0.3) 0%, transparent 50%);
+    animation: rain 2s linear infinite;
+    pointer-events: none;
+}
+
+.thunderstorms-theme {
+    background: linear-gradient(135deg, #9575cd 0%, #673ab7 100%);
+}
+
+.snowing-theme {
+    background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
+}
+
+.windy-theme {
+    background: linear-gradient(135deg, #ffab91 0%, #ff7043 100%);
+}
+
+.hazy-theme {
+    background: linear-gradient(135deg, #b3e5fc 0%, #81d4fa 100%);
+}
+
+.monsoon-theme {
+    background: linear-gradient(135deg, #4fc3f7 0%, #29b6f6 100%);
+}
+
+.very-hot-theme {
+    background: linear-gradient(135deg, #ff8a65 0%, #ff5722 100%);
+}
+
+.humid-theme {
+    background: linear-gradient(135deg, #80deea 0%, #00bcd4 100%);
+}
+
+.mild-theme {
+    background: linear-gradient(135deg, #c5e1a5 0%, #8bc34a 100%);
+}

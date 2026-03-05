@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Memory Forecaster</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>The Memory Forecaster</h1>
+            <p>An LRU Weather Engine</p>
+        </header>
+
+        <form id="weather-form">
+            <input type="text" id="city-input" placeholder="Enter city name (e.g., London, Tokyo)" required>
+            <button type="submit">Search</button>
+        </form>
+
+        <main class="content-area">
+            <!-- Main Weather Display -->
+            <section id="weather-display" class="weather-card-container">
+                <div class="weather-card">
+                    <div id="status-badge-container">
+                        <!-- Badges will be inserted here by JS -->
+                    </div>
+                    <h2 id="city-name">Search for a city to begin</h2>
+                    <div id="weather-icon" class="weather-icon">🌤️</div>
+                    <p id="weather-condition" class="subtle-text">Weather data will appear here.</p>
+                    <div id="temperature" class="temperature-display">--°C</div>
+                    <p id="error-message" class="error-text"></p>
+                </div>
+            </section>
+
+            <!-- Cache Memory Sidebar -->
+            <aside id="cache-sidebar">
+                <h3>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 10.5 8 13l2 2.5"/><path d="m14 10.5 2 2.5-2 2.5"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="M17 12h-2"/><path d="M7 12H5"/><rect width="20" height="16" x="2" y="4" rx="2"/></svg>
+                    Cache Memory (LRU)
+                </h3>
+                <p class="sidebar-subtitle">Most Recently Used at Top</p>
+                <ol id="cache-list">
+                    <!-- Cache items will be listed here by JS -->
+                    <li class="cache-item-placeholder">Cache is currently empty.</li>
+                </ol>
+            </aside>
+
+            <!-- Todo List Sidebar -->
+            <aside id="todo-sidebar">
+                <h3>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11H5a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2h-4"/><path d="M9 11V9a3 3 0 0 1 6 0v2"/><path d="M9 11V9a3 3 0 0 1 6 0v2"/></svg>
+                    Task List
+                </h3>
+                <form id="todo-form">
+                    <input type="text" id="todo-input" placeholder="Add a new task" required>
+                    <button type="submit">Add</button>
+                </form>
+                <ul id="todo-list">
+                    <!-- Todo items will be listed here by JS -->
+                </ul>
+            </aside>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
