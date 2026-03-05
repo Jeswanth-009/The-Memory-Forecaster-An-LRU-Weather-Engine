@@ -26,7 +26,7 @@ def get_weather(city: str):
 
     city = city.lower()
 
-    # 1️⃣ Check cache first
+    # Check cache first
     cached_data = cache.get(city)
 
     if cached_data:
@@ -37,13 +37,13 @@ def get_weather(city: str):
             source="cache"
         )
 
-    # 2️⃣ If not in cache → check store
+    # If not in cache → check store
     if city not in weather_store:
         raise HTTPException(status_code=404, detail="City not found")
 
     data = weather_store[city]
 
-    # 3️⃣ Save result in cache
+    # Save result in cache
     cache.put(city, data)
 
     return WeatherResponse(
