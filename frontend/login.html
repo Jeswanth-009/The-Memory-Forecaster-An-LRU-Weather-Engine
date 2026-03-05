@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Memory Forecaster — Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,700&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="auth.css" />
+</head>
+<body>
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+
+  <div class="card">
+    <div class="brand">
+      <div class="brand-mark">◈</div>
+      <div class="brand-text">
+        <span class="brand-name">Memory Forecaster</span>
+        <span class="brand-sub">LRU · WEATHER · ENGINE</span>
+      </div>
+    </div>
+
+    <h1>Welcome back</h1>
+    <p class="subtitle">Sign in to access your dashboard</p>
+
+    <div class="error-msg" id="error-msg"></div>
+
+    <div class="field">
+      <label>Username</label>
+      <input type="text" id="username" placeholder="e.g. admin" autocomplete="username"/>
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="password" placeholder="••••••••" autocomplete="current-password"/>
+    </div>
+
+    <button class="btn-submit" onclick="handleLogin()">→ SIGN IN</button>
+
+    <div class="divider"><span>OR</span></div>
+
+    <div class="link-row">New here? <a href="register.html">Create an account</a></div>
+
+    <div class="admin-hint">
+      <strong>Demo credentials</strong><br>
+      Username: <strong>admin</strong> &nbsp;·&nbsp; Password: <strong>admin1234</strong>
+    </div>
+  </div>
+
+  <script>
+    const USERS_KEY = 'mf_users', SESSION_KEY = 'mf_session';
+    function getUsers() {
+      const u = JSON.parse(localStorage.getItem(USERS_KEY) || '{}');
+      if (!u['admin']) { u['admin'] = { password: 'admin1234', role: 'ADMIN', avatar: 'A' }; localStorage.setItem(USERS_KEY, JSON.stringify(u)); }
+      return u;
+    }
+    function handleLogin() {
+      const username = document.getElementById('username').value.trim().toLowerCase();
+      const password = document.getElementById('password').value;
+      const err = document.getElementById('error-msg');
+      if (!username || !password) { err.textContent = '⚠ Please fill in all fields.'; err.style.display = 'block'; return; }
+      const user = getUsers()[username];
+      if (!user || user.password !== password) { err.textContent = '⚠ Invalid username or password.'; err.style.display = 'block'; return; }
+      err.style.display = 'none';
+      localStorage.setItem(SESSION_KEY, JSON.stringify({ username, role: user.role || 'USER', avatar: user.avatar || username[0].toUpperCase() }));
+      window.location.href = 'index.html';
+    }
+    document.addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin(); });
+    if (localStorage.getItem(SESSION_KEY)) window.location.href = 'index.html';
+    getUsers();
+  </script>
+</body>
+</html>
