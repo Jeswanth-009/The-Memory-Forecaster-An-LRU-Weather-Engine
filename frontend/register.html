@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Memory Forecaster — Register</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,700&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="auth.css" />
+</head>
+<body>
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+
+  <div class="card">
+    <div class="brand">
+      <div class="brand-mark">◈</div>
+      <div class="brand-text">
+        <span class="brand-name">Memory Forecaster</span>
+        <span class="brand-sub">LRU · WEATHER · ENGINE</span>
+      </div>
+    </div>
+
+    <h1>Create account</h1>
+    <p class="subtitle">Join to explore the LRU weather engine</p>
+
+    <div class="error-msg"   id="error-msg"></div>
+    <div class="success-msg" id="success-msg"></div>
+
+    <div class="field">
+      <label>Username</label>
+      <input type="text" id="reg-username" placeholder="Choose a username" autocomplete="username"/>
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="reg-password" placeholder="Min. 6 characters" oninput="checkStrength(this.value)" autocomplete="new-password"/>
+      <div class="strength-wrap"><div class="strength-bar" id="strength-bar"></div></div>
+      <div class="strength-lbl" id="strength-lbl"></div>
+    </div>
+    <div class="field">
+      <label>Confirm Password</label>
+      <input type="password" id="reg-confirm" placeholder="Repeat your password" autocomplete="new-password"/>
+    </div>
+
+    <button class="btn-submit" onclick="handleRegister()">→ CREATE ACCOUNT</button>
+
+    <div class="divider"><span>OR</span></div>
+    <div class="link-row">Already have an account? <a href="login.html">Sign in</a></div>
+  </div>
+
+  <script>
+    const USERS_KEY='mf_users',SESSION_KEY='mf_session';
+    function getUsers(){const u=JSON.parse(localStorage.getItem(USERS_KEY)||'{}');if(!u['admin']){u['admin']={password:'admin1234',role:'ADMIN',avatar:'A'};localStorage.setItem(USERS_KEY,JSON.stringify(u));}return u;}
+    function checkStrength(pw){
+      const bar=document.getElementById('strength-bar'),lbl=document.getElementById('strength-lbl');
+      if(!pw){bar.style.width='0%';lbl.textContent='';return;}
+      let s=0;if(pw.length>=6)s++;if(pw.length>=10)s++;if(/[A-Z]/.test(pw))s++;if(/[0-9]/.test(pw))s++;if(/[^A-Za-z0-9]/.test(pw))s++;
+      const L=[{w:'20%',c:'#b23a48',t:'Weak'},{w:'40%',c:'#c96040',t:'Fair'},{w:'60%',c:'#c89040',t:'Moderate'},{w:'80%',c:'#708840',t:'Strong'},{w:'100%',c:'#508040',t:'Very strong'}];
+      const l=L[Math.min(s-1,4)]||L[0];bar.style.width=l.w;bar.style.background=l.c;lbl.textContent=l.t;lbl.style.color=l.c;
+    }
+    function handleRegister(){
+      const username=document.getElementById('reg-username').value.trim().toLowerCase();
+      const password=document.getElementById('reg-password').value;
+      const confirm=document.getElementById('reg-confirm').value;
+      const err=document.getElementById('error-msg'),suc=document.getElementById('success-msg');
+      err.style.display='none';suc.style.display='none';
+      if(!username||!password||!confirm){err.textContent='⚠ Please fill in all fields.';err.style.display='block';return;}
+      if(username.length<3){err.textContent='⚠ Username must be at least 3 characters.';err.style.display='block';return;}
+      if(password.length<6){err.textContent='⚠ Password must be at least 6 characters.';err.style.display='block';return;}
+      if(password!==confirm){err.textContent='⚠ Passwords do not match.';err.style.display='block';return;}
+      const users=getUsers();
+      if(users[username]){err.textContent='⚠ Username already taken.';err.style.display='block';return;}
+      users[username]={password,role:'USER',avatar:username[0].toUpperCase()};
+      localStorage.setItem(USERS_KEY,JSON.stringify(users));
+      suc.textContent='✓ Account created! Redirecting…';suc.style.display='block';
+      setTimeout(()=>window.location.href='login.html',1400);
+    }
+    document.addEventListener('keydown',e=>{if(e.key==='Enter')handleRegister();});
+    if(localStorage.getItem(SESSION_KEY))window.location.href='index.html';
+    getUsers();
+  </script>
+</body>
+</html>
