@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Memory Forecaster — Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,700&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bordeaux:   #461220;
+      --burnt-rose: #8c2f39;
+      --mauve:      #b23a48;
+      --blush:      #fcb9b2;
+      --peach:      #fed0bb;
+      --bg:         #fed0bb;
+      --surface:    rgba(255,240,232,0.82);
+      --surface-2:  rgba(254,208,187,0.65);
+      --border:     rgba(178,58,72,0.16);
+      --border-hi:  rgba(140,47,57,0.32);
+      --border-soft:rgba(178,58,72,0.1);
+      --muted:      #a05060;
+      --dim:        rgba(70,18,32,0.38);
+      --font-serif: 'Cormorant Garamond', Georgia, serif;
+      --font-mono:  'DM Mono', monospace;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--bordeaux);
+      font-family: var(--font-mono);
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* ── BLOBS ── */
+    .blob { position: fixed; border-radius: 50%; filter: blur(80px); pointer-events: none; z-index: 0; }
+    .blob-1 { width:600px;height:600px;background:#fcb9b2;opacity:.45;top:-200px;left:-150px;animation:drift 18s ease-in-out infinite alternate; }
+    .blob-2 { width:450px;height:450px;background:rgba(178,58,72,.08);bottom:-120px;right:-100px;animation:drift 22s ease-in-out infinite alternate-reverse; }
+    .blob-3 { width:300px;height:300px;background:rgba(252,185,178,.3);top:45%;right:20%;animation:drift 13s ease-in-out infinite alternate; }
+    @keyframes drift { from{transform:translate(0,0) scale(1);}to{transform:translate(28px,20px) scale(1.07);} }
+
+    .grain { position:fixed;inset:0;z-index:1;pointer-events:none;
+      background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+      background-size:200px; }
+
+    /* ── NAVBAR ── */
+    .navbar {
+      position:sticky;top:0;z-index:200;
+      display:flex;align-items:center;justify-content:space-between;
+      padding:0 28px;height:58px;
+      background:rgba(70,18,32,0.96);
+      backdrop-filter:blur(12px);
+      border-bottom:1px solid rgba(252,185,178,.15);
+      box-shadow:0 2px 20px rgba(70,18,32,.28);
+    }
+    .nav-left  { display:flex;align-items:center;gap:11px; }
+    .nav-mark  {
+      width:34px;height:34px;border-radius:9px;
+      background:linear-gradient(135deg,#fcb9b2,#fed0bb);
+      display:flex;align-items:center;justify-content:center;
+      color:#461220;font-size:1rem;font-weight:700;
+      box-shadow:0 2px 10px rgba(252,185,178,.35);
+      animation:markPulse 4s ease-in-out infinite;
+    }
+    @keyframes markPulse { 0%,100%{box-shadow:0 2px 10px rgba(252,185,178,.25);}50%{box-shadow:0 2px 20px rgba(252,185,178,.6);} }
+    .nav-brand { font-family:var(--font-serif);font-size:1.2rem;font-weight:700;color:#fed0bb;letter-spacing:.01em; }
+    .nav-badge { background:rgba(252,185,178,.12);border:1px solid rgba(252,185,178,.25);color:#fcb9b2;font-size:.55rem;letter-spacing:.22em;padding:3px 10px;border-radius:4px; }
+    .nav-center { display:flex;align-items:center;gap:20px; }
+    .nav-stat  { text-align:center; }
+    .ns-val    { font-family:var(--font-serif);font-size:1.15rem;font-weight:700;color:#fed0bb;line-height:1; }
+    .ns-lbl    { font-size:.48rem;letter-spacing:.2em;color:rgba(254,208,187,.45);margin-top:2px; }
+    .nav-sep   { width:1px;height:28px;background:rgba(252,185,178,.15); }
+    .nav-live  { display:flex;align-items:center;gap:7px;padding-left:4px; }
+    .live-dot  { width:7px;height:7px;border-radius:50%;background:#7ee8a0;box-shadow:0 0 8px #7ee8a0;animation:blink 2s ease-in-out infinite; }
+    @keyframes blink { 0%,100%{opacity:1;}50%{opacity:.15;} }
+    .live-txt  { font-size:.58rem;letter-spacing:.2em;color:rgba(254,208,187,.5); }
+    .nav-right { display:flex;align-items:center;gap:12px; }
+    .nav-user  { display:flex;align-items:center;gap:10px; }
+    .user-avatar {
+      width:32px;height:32px;border-radius:50%;
+      background:linear-gradient(135deg,#fcb9b2,#fed0bb);
+      display:flex;align-items:center;justify-content:center;
+      font-size:.78rem;font-weight:600;color:#461220;
+      border:1.5px solid rgba(254,208,187,.3);
+    }
+    .user-name { font-size:.76rem;font-weight:500;color:#fed0bb; }
+    .user-role { font-size:.48rem;letter-spacing:.2em;color:rgba(254,208,187,.4); }
+    .btn-signout {
+      background:none;border:1px solid rgba(252,185,178,.28);color:#fcb9b2;
+      font-family:var(--font-mono);font-size:.62rem;letter-spacing:.1em;
+      padding:6px 14px;border-radius:6px;cursor:pointer;transition:all .2s;
+    }
+    .btn-signout:hover { background:rgba(252,185,178,.1);border-color:#fcb9b2;color:#fed0bb; }
+
+    /* ── CACHE BAR ── */
+    .cache-bar-strip {
+      position:relative;z-index:10;
+      display:flex;align-items:center;gap:12px;padding:9px 28px;
+      background:rgba(252,185,178,.5);
+      backdrop-filter:blur(8px);
+      border-bottom:1px solid rgba(178,58,72,.14);
+    }
+    .cb-label  { font-size:.65rem;color:#8c2f39;white-space:nowrap;opacity:.8; }
+    .cb-count  { font-size:.65rem;color:#8c2f39;white-space:nowrap; }
+    .cb-count strong { color:#461220; }
+    .cb-track  { flex:1;height:4px;background:rgba(178,58,72,.15);border-radius:4px;overflow:hidden; }
+    .cb-fill   { height:100%;width:0%;background:linear-gradient(90deg,#8c2f39,#b23a48);border-radius:4px;transition:width .5s ease; }
+    .cb-pct    { font-size:.65rem;color:#461220;font-weight:500;min-width:28px; }
+    .cb-hint   { font-size:.58rem;color:#a05060;white-space:nowrap;opacity:.7; }
+
+    /* ── SEARCH ── */
+    .search-strip {
+      position:relative;z-index:10;
+      display:flex;margin:20px 28px 0;
+      border:1.5px solid rgba(140,47,57,.32);
+      border-radius:14px;overflow:hidden;
+      background:rgba(255,240,232,.82);
+      backdrop-filter:blur(16px);
+      box-shadow:0 4px 24px rgba(70,18,32,.1),0 1px 0 rgba(255,255,255,.7) inset;
+      transition:border-color .3s,box-shadow .3s;
+    }
+    .search-strip:focus-within { border-color:#8c2f39;box-shadow:0 0 0 3px rgba(140,47,57,.1),0 4px 24px rgba(70,18,32,.12),0 1px 0 rgba(255,255,255,.7) inset; }
+    .search-box  { flex:1;display:flex;align-items:center;gap:12px;padding:0 20px; }
+    .search-icon { font-size:1rem;opacity:.45; }
+    .main-input  { flex:1;background:none;border:none;outline:none;color:#461220;font-family:var(--font-mono);font-size:.95rem;padding:16px 0; }
+    .main-input::placeholder { color:rgba(70,18,32,.38); }
+    .btn-get-weather {
+      background:#461220;border:none;color:#fed0bb;
+      font-family:var(--font-mono);font-size:.75rem;font-weight:500;letter-spacing:.12em;
+      padding:0 28px;cursor:pointer;transition:background .2s;white-space:nowrap;
+    }
+    .btn-get-weather:hover  { background:#8c2f39; }
+    .btn-get-weather:disabled { background:#a05060;cursor:not-allowed; }
+
+    /* ── CHIPS ── */
+    .chip-row { position:relative;z-index:10;display:flex;flex-wrap:wrap;gap:8px;padding:12px 28px; }
+    .chip {
+      background:rgba(255,240,232,.82);border:1px solid rgba(140,47,57,.32);
+      color:#8c2f39;font-family:var(--font-mono);font-size:.62rem;
+      padding:5px 14px;border-radius:20px;cursor:pointer;
+      backdrop-filter:blur(10px);box-shadow:0 1px 4px rgba(70,18,32,.07);transition:all .2s;
+    }
+    .chip:hover { background:#461220;color:#fed0bb;border-color:#461220;box-shadow:0 2px 10px rgba(70,18,32,.2); }
+
+    /* ── GLOBAL ERROR ── */
+    .global-error {
+      position:relative;z-index:10;margin:4px 28px 8px;
+      background:rgba(178,58,72,.1);border:1px solid rgba(178,58,72,.35);
+      color:#b23a48;border-radius:10px;padding:10px 16px;font-size:.7rem;
+      animation:fadeUp .3s ease;
+    }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);} }
+
+    /* ── WEATHER RESULT CARD ── */
+    .weather-result-panel {
+      position:relative;z-index:10;margin:10px 20px 12px;
+      background:rgba(255,240,232,.82);
+      border:1.5px solid rgba(178,58,72,.16);
+      border-radius:18px;overflow:hidden;
+      backdrop-filter:blur(16px);
+      box-shadow:0 6px 32px rgba(70,18,32,.14),0 1px 0 rgba(255,255,255,.65) inset;
+      animation:slideDown .4s cubic-bezier(.34,1.56,.64,1);
+    }
+    @keyframes slideDown { from{opacity:0;transform:translateY(-12px);}to{opacity:1;transform:translateY(0);} }
+
+    .result-header {
+      display:flex;align-items:center;justify-content:space-between;
+      padding:14px 20px;
+      background:rgba(252,185,178,.25);
+      border-bottom:1px solid rgba(178,58,72,.1);
+    }
+    .result-badge {
+      font-size:.62rem;font-weight:600;letter-spacing:.12em;
+      padding:5px 12px;border-radius:6px;
+    }
+    .result-badge.hit { background:rgba(58,144,88,.15);color:#2d7a48;border:1px solid rgba(58,144,88,.3); }
+    .result-badge.miss { background:rgba(140,47,57,.15);color:#8c2f39;border:1px solid rgba(140,47,57,.3); }
+    .result-close {
+      background:none;border:none;color:#a05060;font-size:.9rem;cursor:pointer;
+      transition:color .2s;opacity:.6;
+    }
+    .result-close:hover { color:#b23a48;opacity:1; }
+
+    .result-body {
+      display:flex;align-items:flex-start;gap:32px;padding:28px;
+      min-height:200px;
+    }
+    .result-left { flex:1;display:flex;flex-direction:column; }
+    .result-city {
+      font-family:var(--font-serif);font-size:2.8rem;font-weight:700;
+      color:#461220;text-transform:capitalize;line-height:1;margin-bottom:4px;
+    }
+    .result-country {
+      font-size:.65rem;letter-spacing:.18em;color:#a05060;margin-bottom:20px;
+    }
+    .result-icon {
+      font-size:4.5rem;line-height:1;margin-bottom:10px;
+    }
+    .result-condition {
+      font-size:1rem;color:#461220;font-weight:500;margin-bottom:4px;
+    }
+    .result-feels {
+      font-size:.75rem;color:#a05060;font-style:italic;
+    }
+    .result-temp {
+      display:flex;align-items:baseline;gap:6px;
+      font-family:var(--font-serif);font-size:6rem;font-weight:700;
+      color:#8c2f39;line-height:1;
+    }
+    .result-temp sup { font-size:2rem;vertical-align:super;color:#a05060;font-weight:400; }
+
+    .result-details {
+      display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;
+      padding:0 28px 24px;
+    }
+    .detail-item {
+      display:flex;flex-direction:column;align-items:flex-start;gap:6px;
+      background:rgba(255,255,255,.45);border:1px solid rgba(178,58,72,.1);
+      border-radius:12px;padding:14px 16px;
+      backdrop-filter:blur(8px);
+    }
+    .detail-icon { font-size:1.3rem; }
+    .detail-label { font-size:.52rem;letter-spacing:.22em;color:rgba(70,18,32,.38);text-transform:uppercase; }
+    .detail-value { font-family:var(--font-serif);font-size:1.6rem;font-weight:700;color:#461220;line-height:1; }
+
+    .result-footer {
+      display:flex;justify-content:flex-end;align-items:center;gap:12px;
+      padding:10px 28px 12px;
+      font-size:.58rem;color:rgba(70,18,32,.38);
+      border-top:1px solid rgba(178,58,72,.08);
+    }
+
+    /* ── MAIN GRID ── */
+    .main-grid {
+      position:relative;z-index:10;
+      display:grid;grid-template-columns:1fr 1fr;
+      gap:16px;padding:12px 28px 36px;
+    }
+
+    /* ── PANELS ── */
+    .panel {
+      background:rgba(255,240,232,.82);
+      border:1px solid rgba(178,58,72,.16);
+      border-radius:16px;overflow:hidden;
+      backdrop-filter:blur(16px);
+      box-shadow:0 4px 20px rgba(70,18,32,.08),0 1px 0 rgba(255,255,255,.65) inset;
+      transition:box-shadow .3s;
+    }
+    .panel:hover { box-shadow:0 6px 28px rgba(70,18,32,.14),0 1px 0 rgba(255,255,255,.65) inset; }
+    .panel-get   { border-top:3px solid #3a9058; }
+    .panel-del   { border-top:3px solid #b23a48; }
+    .panel-live  { border-top:3px solid #8c2f39; }
+    .panel-stats { border-top:3px solid #461220; }
+
+    .panel-header {
+      display:flex;align-items:center;gap:10px;
+      padding:13px 18px;
+      background:rgba(252,185,178,.25);
+      border-bottom:1px solid rgba(178,58,72,.1);
+    }
+    .panel-title { font-size:.6rem;font-weight:500;letter-spacing:.24em;color:#a05060; }
+    .panel-icon  { font-size:1rem; }
+    .method-badge { font-size:.57rem;font-weight:600;letter-spacing:.1em;padding:3px 9px;border-radius:4px; }
+    .badge-get { background:rgba(58,144,88,.12);color:#2d7a48;border:1px solid rgba(58,144,88,.28); }
+    .badge-del { background:rgba(178,58,72,.1);color:#b23a48;border:1px solid rgba(178,58,72,.28); }
+
+    .panel-body  { padding:18px;display:flex;flex-direction:column;gap:12px; }
+    .field-label { font-size:.53rem;letter-spacing:.26em;color:rgba(70,18,32,.38);text-transform:uppercase; }
+
+    .panel-input {
+      width:100%;background:rgba(255,255,255,.55);
+      border:1.5px solid rgba(178,58,72,.16);border-radius:10px;
+      color:#461220;font-family:var(--font-mono);font-size:.85rem;
+      padding:11px 14px;outline:none;
+      transition:border-color .25s,box-shadow .25s,background .25s;
+    }
+    .panel-input:focus { border-color:#8c2f39;background:rgba(255,255,255,.8);box-shadow:0 0 0 2px rgba(140,47,57,.1); }
+    .panel-input::placeholder { color:rgba(70,18,32,.38); }
+
+    .btn-action {
+      width:100%;border:none;
+      font-family:var(--font-mono);font-size:.75rem;font-weight:500;letter-spacing:.15em;
+      padding:12px;border-radius:10px;cursor:pointer;
+      transition:opacity .2s,transform .15s,box-shadow .2s;
+      box-shadow:0 3px 12px rgba(70,18,32,.18);
+    }
+    .btn-action:hover { opacity:.88;transform:translateY(-2px);box-shadow:0 5px 16px rgba(70,18,32,.22); }
+    .btn-do-get { background:#461220;color:#fed0bb; }
+    .btn-do-del { background:#b23a48;color:#fff6f3; }
+
+    .response-box {
+      background:rgba(254,208,187,.3);border:1px solid rgba(178,58,72,.1);
+      border-radius:10px;padding:12px 14px;
+      font-size:.7rem;color:rgba(70,18,32,.38);
+      min-height:54px;line-height:1.8;font-style:italic;white-space:pre-wrap;
+      transition:color .3s,background .3s;
+    }
+    .response-box.success { color:#461220;font-style:normal;background:rgba(255,255,255,.4); }
+    .response-box.error   { color:#b23a48;font-style:normal;background:rgba(178,58,72,.07); }
+    .response-box.hit     { color:#2d7a48;font-style:normal;background:rgba(58,144,88,.07); }
+
+    /* ── LIVE VIEW ── */
+    .btn-flush-sm {
+      margin-left:auto;background:none;
+      border:1px solid rgba(178,58,72,.16);color:#a05060;
+      width:28px;height:28px;border-radius:6px;
+      cursor:pointer;display:flex;align-items:center;justify-content:center;
+      font-size:.9rem;transition:all .2s;
+    }
+    .btn-flush-sm:hover { border-color:#b23a48;color:#b23a48;background:rgba(178,58,72,.06); }
+
+    .live-legend {
+      display:flex;align-items:center;gap:10px;
+      padding:7px 18px;font-size:.58rem;color:#a05060;
+      border-bottom:1px solid rgba(178,58,72,.1);
+      background:rgba(254,208,187,.2);
+    }
+    .sep { color:rgba(140,47,57,.32); }
+    .dot { display:inline-block;width:8px;height:8px;border-radius:50%; }
+    .dot-mru { background:#461220; }
+    .dot-lru { background:#fcb9b2;border:1.5px solid #b23a48; }
+    .hint-txt { color:rgba(70,18,32,.38);font-style:italic; }
+
+    .live-slots { padding:14px 18px;min-height:190px;display:flex;flex-direction:column;gap:8px; }
+    .live-empty { flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:rgba(70,18,32,.38);font-size:.7rem;text-align:center;line-height:1.8; }
+    .empty-globe { font-size:2.2rem; }
+
+    .live-slot {
+      display:flex;align-items:center;gap:12px;
+      padding:10px 14px;
+      background:rgba(255,255,255,.45);
+      border:1px solid rgba(178,58,72,.16);
+      border-radius:10px;cursor:pointer;
+      backdrop-filter:blur(6px);
+      transition:all .2s;
+      animation:slotIn .3s cubic-bezier(.34,1.56,.64,1);
+    }
+    @keyframes slotIn { from{opacity:0;transform:translateX(-10px) scale(.96);}to{opacity:1;transform:translateX(0) scale(1);} }
+    .live-slot:hover { background:rgba(255,255,255,.7);border-color:#8c2f39;box-shadow:0 3px 12px rgba(70,18,32,.1);transform:translateX(2px); }
+    .live-slot:nth-child(1) { border-left:3px solid #461220; }
+    .live-slot:nth-child(2) { border-left:3px solid #8c2f39; }
+    .live-slot:nth-child(3) { border-left:3px solid #b23a48; }
+    .live-slot:nth-child(4) { border-left:3px solid #fcb9b2; }
+    .live-slot:nth-child(5) { border-left:3px solid rgba(252,185,178,.45); }
+    .slot-rank      { font-size:.56rem;color:rgba(70,18,32,.38);width:16px;flex-shrink:0; }
+    .slot-city      { flex:1;font-size:.82rem;text-transform:capitalize;color:#461220;font-weight:500; }
+    .slot-condition { font-size:.65rem;color:#a05060; }
+    .slot-temp      { font-size:.78rem;color:#8c2f39;font-weight:600; }
+    .slot-tag       { font-size:.49rem;letter-spacing:.15em;padding:2px 8px;border-radius:4px;flex-shrink:0; }
+    .tag-mru { background:#461220;color:#fed0bb; }
+    .tag-lru { background:rgba(252,185,178,.4);color:#b23a48;border:1px solid rgba(178,58,72,.25); }
+
+    /* ── STATS GRID ── */
+    .stats-grid { display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:16px; }
+    .stat-card {
+      background:rgba(255,255,255,.45);border:1px solid rgba(178,58,72,.1);
+      border-radius:12px;padding:14px 16px;
+      backdrop-filter:blur(8px);transition:background .2s;
+    }
+    .stat-card:hover { background:rgba(255,255,255,.65); }
+    .sc-label { font-size:.52rem;letter-spacing:.22em;color:rgba(70,18,32,.38);margin-bottom:6px; }
+    .sc-val   { font-family:var(--font-serif);font-size:2rem;font-weight:700;color:#461220;line-height:1; }
+    .sc-hit   { color:#2d7a48; }
+    .sc-miss  { color:#b23a48; }
+    .sc-evict { color:#8c2f39; }
+
+    @media (max-width:768px) {
+      .main-grid { grid-template-columns:1fr; }
+      .nav-center { display:none; }
+      .cb-hint { display:none; }
+      .result-body { flex-direction:column;align-items:center;text-align:center; }
+      .result-left { align-items:center; }
+      .result-temp { flex-direction:column; }
+      .result-details { grid-template-columns:1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+  <div class="grain"></div>
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="nav-left">
+      <div class="nav-mark">◈</div>
+      <span class="nav-brand">WeatherKV</span>
+      <span class="nav-badge">LRU CACHE</span>
+    </div>
+    <div class="nav-center">
+      <div class="nav-stat"><div class="ns-val" id="nav-cached">0</div><div class="ns-lbl">CACHED</div></div>
+      <div class="nav-sep"></div>
+      <div class="nav-stat"><div class="ns-val" id="nav-hitrate">0%</div><div class="ns-lbl">HIT RATE</div></div>
+      <div class="nav-sep"></div>
+      <div class="nav-stat"><div class="ns-val" id="nav-evictions">0</div><div class="ns-lbl">EVICTIONS</div></div>
+      <div class="nav-live"><span class="live-dot"></span><span class="live-txt">LIVE</span></div>
+    </div>
+    <div class="nav-right">
+      <div class="nav-user">
+        <div class="user-avatar" id="user-avatar">A</div>
+        <div class="user-info">
+          <div class="user-name" id="user-name">admin</div>
+          <div class="user-role" id="user-role">ADMIN</div>
+        </div>
+      </div>
+      <button class="btn-signout" onclick="signOut()">Sign Out</button>
+    </div>
+  </nav>
+
+  <!-- CACHE BAR -->
+  <div class="cache-bar-strip">
+    <span class="cb-label">LRU Cache:</span>
+    <span class="cb-count" id="cb-count"><strong>0</strong> / 5 cities</span>
+    <div class="cb-track"><div class="cb-fill" id="cb-fill"></div></div>
+    <span class="cb-pct" id="cb-pct">0%</span>
+    <span class="cb-hint">⚡ Least-searched city auto-evicted when full</span>
+  </div>
+
+  <!-- SEARCH -->
+  <div class="search-strip">
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="main-search" class="main-input" placeholder="Search a city — Mumbai, Delhi, Chennai…" autocomplete="off"/>
+    </div>
+    <button class="btn-get-weather" id="btn-search">Get Weather</button>
+  </div>
+
+  <div class="chip-row">
+    <button class="chip" onclick="quickSearch('bangalore')">Bangalore</button>
+    <button class="chip" onclick="quickSearch('delhi')">Delhi</button>
+    <button class="chip" onclick="quickSearch('mumbai')">Mumbai</button>
+    <button class="chip" onclick="quickSearch('hyderabad')">Hyderabad</button>
+    <button class="chip" onclick="quickSearch('chennai')">Chennai</button>
+    <button class="chip" onclick="quickSearch('kolkata')">Kolkata</button>
+    <button class="chip" onclick="quickSearch('jaipur')">Jaipur</button>
+    <button class="chip" onclick="quickSearch('pune')">Pune</button>
+    <button class="chip" onclick="quickSearch('ahmedabad')">Ahmedabad</button>
+    <button class="chip" onclick="quickSearch('lucknow')">Lucknow</button>
+  </div>
+
+  <div class="global-error" id="global-error" style="display:none;"></div>
+
+  <!-- WEATHER RESULT CARD -->
+  <div class="weather-result-panel" id="weather-result-panel" style="display:none;">
+    <div class="result-header">
+      <div class="result-badge" id="result-badge"></div>
+      <button class="result-close" onclick="closeWeatherResult()">✕</button>
+    </div>
+    <div class="result-body">
+      <div class="result-left">
+        <div class="result-city" id="result-city"></div>
+        <div class="result-country" id="result-country"></div>
+        <div class="result-icon" id="result-icon"></div>
+        <div class="result-condition" id="result-condition"></div>
+        <div class="result-feels" id="result-feels"></div>
+      </div>
+      <div class="result-temp" id="result-temp"></div>
+    </div>
+    <div class="result-details">
+      <div class="detail-item">
+        <span class="detail-icon">💧</span>
+        <span class="detail-label">HUMIDITY</span>
+        <span class="detail-value" id="detail-humidity">—</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-icon">🌬️</span>
+        <span class="detail-label">WIND</span>
+        <span class="detail-value" id="detail-wind">—</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-icon">👁️</span>
+        <span class="detail-label">VISIBILITY</span>
+        <span class="detail-value" id="detail-visibility">—</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-icon">☀️</span>
+        <span class="detail-label">UV INDEX</span>
+        <span class="detail-value" id="detail-uv">—</span>
+      </div>
+    </div>
+    <div class="result-footer" id="result-footer"></div>
+  </div>
+
+  <!-- MAIN GRID -->
+  <div class="main-grid">
+
+    <div class="panel panel-get">
+      <div class="panel-header">
+        <span class="method-badge badge-get">GET</span>
+        <span class="panel-title">RETRIEVE CITY</span>
+      </div>
+      <div class="panel-body">
+        <label class="field-label">CITY (KEY)</label>
+        <input type="text" class="panel-input" id="get-city" placeholder="e.g. Mumbai"/>
+        <button class="btn-action btn-do-get" onclick="doGet()">🔍 GET</button>
+        <div class="response-box" id="get-response">Response appears here…</div>
+      </div>
+    </div>
+
+    <div class="panel panel-del">
+      <div class="panel-header">
+        <span class="method-badge badge-del">DEL</span>
+        <span class="panel-title">DELETE CITY</span>
+      </div>
+      <div class="panel-body">
+        <label class="field-label">CITY (KEY)</label>
+        <input type="text" class="panel-input" id="del-city" placeholder="e.g. Mumbai"/>
+        <button class="btn-action btn-do-del" onclick="doDel()">🗑 DELETE</button>
+        <div class="response-box" id="del-response">Response appears here…</div>
+      </div>
+    </div>
+
+    <div class="panel panel-live">
+      <div class="panel-header">
+        <span class="panel-icon">⟁</span>
+        <span class="panel-title">LRU CACHE — LIVE VIEW</span>
+        <button class="btn-flush-sm" onclick="flushCache()" title="Flush all">⊠</button>
+      </div>
+      <div class="live-legend">
+        <span><span class="dot dot-lru"></span> next evicted</span>
+        <span class="sep">|</span>
+        <span><span class="dot dot-mru"></span> most recent</span>
+        <span class="sep">|</span>
+        <span class="hint-txt">click row to re-search</span>
+      </div>
+      <div class="live-slots" id="live-slots">
+        <div class="live-empty"><div class="empty-globe">🌍</div><p>No cities cached.<br>Search a city above.</p></div>
+      </div>
+    </div>
+
+    <div class="panel panel-stats">
+      <div class="panel-header">
+        <span class="panel-icon">📊</span>
+        <span class="panel-title">CACHE STATISTICS</span>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="sc-label">CACHE SIZE</div><div class="sc-val" id="sc-size">0/5</div></div>
+        <div class="stat-card"><div class="sc-label">HIT RATE</div><div class="sc-val sc-hit" id="sc-hitrate">0%</div></div>
+        <div class="stat-card"><div class="sc-label">CACHE HITS</div><div class="sc-val sc-hit" id="sc-hits">0</div></div>
+        <div class="stat-card"><div class="sc-label">CACHE MISSES</div><div class="sc-val sc-miss" id="sc-misses">0</div></div>
+        <div class="stat-card"><div class="sc-label">LRU EVICTIONS</div><div class="sc-val sc-evict" id="sc-evictions">0</div></div>
+        <div class="stat-card"><div class="sc-label">TOTAL SEARCHES</div><div class="sc-val" id="sc-total">0</div></div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const API_BASE = "http://127.0.0.1:8000";
+    const SESSION_KEY = 'mf_session';
+
+    const session = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
+    if (!session) window.location.href = 'login.html';
+    else {
+      document.getElementById('user-name').textContent   = session.username;
+      document.getElementById('user-role').textContent   = session.role || 'USER';
+      document.getElementById('user-avatar').textContent = session.avatar || session.username[0].toUpperCase();
+    }
+
+    function signOut() { localStorage.removeItem(SESSION_KEY); window.location.href = 'login.html'; }
+
+    const stats = { total:0, hits:0, misses:0, evictions:0 };
+    let prevCacheKeys = [], cachedData = {};
+
+    const EMOJI = { sunny:'☀️',cloudy:'☁️',rainy:'🌧️',humid:'💧',haze:'🌫️',hot:'🔥',dry:'🏜️',clear:'✨',windy:'🌬️' };
+    const getEmoji = c => EMOJI[c?.toLowerCase()] || '🌡️';
+
+    function showGlobalError(msg) {
+      const el = document.getElementById('global-error');
+      el.textContent = msg; el.style.display = 'block';
+      clearTimeout(el._t); el._t = setTimeout(() => el.style.display = 'none', 4000);
+    }
+    function hideGlobalError() { document.getElementById('global-error').style.display = 'none'; }
+    function setResponse(id, text, cls='') { const el=document.getElementById(id); el.textContent=text; el.className=`response-box ${cls}`; }
+
+    function closeWeatherResult() {
+      document.getElementById('weather-result-panel').style.display = 'none';
+    }
+
+    function showWeatherResult(data) {
+      const isHit = data.source === 'cache';
+      const resultPanel = document.getElementById('weather-result-panel');
+      
+      // Set badge
+      const badge = document.getElementById('result-badge');
+      badge.textContent = isHit ? '⚡ CACHE HIT' : '☁ CACHE MISS';
+      badge.className = `result-badge ${isHit ? 'hit' : 'miss'}`;
+      
+      // Set main info
+      document.getElementById('result-city').textContent = data.city;
+      document.getElementById('result-country').textContent = data.country || 'CITY';
+      document.getElementById('result-icon').textContent = getEmoji(data.condition);
+      document.getElementById('result-condition').textContent = data.condition;
+      document.getElementById('result-feels').textContent = `Feels like ${data.feels_like || data.temperature}°C`;
+      
+      // Set temperature
+      const tempEl = document.getElementById('result-temp');
+      tempEl.innerHTML = `${data.temperature}<sup>°C</sup>`;
+      
+      // Set details (fallback to dashes if not available)
+      document.getElementById('detail-humidity').textContent = data.humidity ? `${data.humidity}%` : '—';
+      document.getElementById('detail-wind').textContent = data.wind_speed ? `${data.wind_speed} km/h` : '—';
+      document.getElementById('detail-visibility').textContent = data.visibility ? `${data.visibility} km` : '—';
+      document.getElementById('detail-uv').textContent = data.uv_index ? `${data.uv_index}` : '—';
+      
+      // Set footer
+      const now = new Date().toLocaleString();
+      document.getElementById('result-footer').textContent = `Last updated: ${now} · Source: ${isHit ? 'Cache' : 'Live Fetch'}`;
+      
+      // Show panel
+      resultPanel.style.display = 'block';
+      // Scroll into view
+      resultPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    async function mainSearch() { const c=document.getElementById('main-search').value.trim(); if(c) await fetchWeatherAndShow(c); }
+    async function quickSearch(city) { document.getElementById('main-search').value=city; await fetchWeatherAndShow(city); }
+
+    async function fetchWeatherAndShow(city) {
+      hideGlobalError();
+      document.getElementById('btn-search').disabled = true;
+      try {
+        const res = await fetch(`${API_BASE}/weather/${encodeURIComponent(city.toLowerCase())}`);
+        if (res.status===404) { showGlobalError(`⚠ City "${city}" not found.`); return; }
+        if (res.status===422) { showGlobalError('⚠ Invalid city name.'); return; }
+        if (!res.ok) { showGlobalError(`⚠ Server error (${res.status}).`); return; }
+        const data = await res.json();
+        cachedData[data.city] = data;
+        updateStats(data.source);
+        showWeatherResult(data);
+        await refreshCache();
+      } catch (_) { showGlobalError('⚠ Cannot reach the API. Is the backend running on port 8000?'); }
+      finally { document.getElementById('btn-search').disabled = false; }
+    }
+
+    async function doGet() {
+      const city = document.getElementById('get-city').value.trim().toLowerCase();
+      if (!city) { setResponse('get-response','⚠ Enter a city name.','error'); return; }
+      setResponse('get-response','Fetching…','');
+      try {
+        const res = await fetch(`${API_BASE}/weather/${encodeURIComponent(city)}`);
+        if (res.status===404) { setResponse('get-response',`404 — "${city}" not found.`,'error'); return; }
+        if (!res.ok) { setResponse('get-response',`Error ${res.status}`,'error'); return; }
+        const d = await res.json(); const isHit=d.source==='cache';
+        cachedData[d.city]=d; updateStats(d.source);
+        setResponse('get-response',`${isHit?'⚡ CACHE HIT':'☁ CACHE MISS'}\nCity: ${d.city}  |  Temp: ${d.temperature}°C  |  ${d.condition}`,isHit?'hit':'success');
+        await refreshCache();
+      } catch(_) { setResponse('get-response','⚠ API unreachable.','error'); }
+    }
+
+    async function doDel() {
+      const city = document.getElementById('del-city').value.trim().toLowerCase();
+      if (!city) { setResponse('del-response','⚠ Enter a city name.','error'); return; }
+      setResponse('del-response','Deleting…','');
+      try {
+        const res = await fetch(`${API_BASE}/cache/${encodeURIComponent(city)}`,{method:'DELETE'});
+        if (res.status===404) { setResponse('del-response',`"${city}" is not in cache.`,'error'); return; }
+        if (!res.ok) { setResponse('del-response',`Error ${res.status}`,'error'); return; }
+        setResponse('del-response',`✓ "${city}" removed from cache.`,'success');
+        await refreshCache();
+      } catch(_) { setResponse('del-response','⚠ API unreachable.','error'); }
+    }
+
+    async function flushCache() {
+      try { await fetch(`${API_BASE}/cache`,{method:'DELETE'}); prevCacheKeys=[]; cachedData={}; await refreshCache(); }
+      catch(_) { showGlobalError('⚠ Could not flush cache.'); }
+    }
+
+    async function refreshCache() {
+      try {
+        const res=await fetch(`${API_BASE}/cache`), data=await res.json(), keys=data.cache||[];
+        const evicted=prevCacheKeys.filter(k=>!keys.includes(k));
+        stats.evictions+=evicted.length; prevCacheKeys=[...keys];
+        await renderLiveSlots(keys); updateNavStats(keys.length); updateStatsPanel(keys.length);
+      } catch(_){}
+    }
+
+    async function renderLiveSlots(keys) {
+      const c=document.getElementById('live-slots');
+      if(!keys.length){c.innerHTML='<div class="live-empty"><div class="empty-globe">🌍</div><p>No cities cached.<br>Search a city above.</p></div>';return;}
+      const slots=await Promise.all(keys.map(async(city,i)=>{
+        if(!cachedData[city]){try{const r=await fetch(`${API_BASE}/weather/${city}`);if(r.ok)cachedData[city]=await r.json();}catch(_){}}
+        const d=cachedData[city],isMRU=i===0,isLRU=i===keys.length-1&&keys.length>1;
+        const tag=isMRU?'<span class="slot-tag tag-mru">MRU</span>':(isLRU?'<span class="slot-tag tag-lru">LRU</span>':'');
+        return `<div class="live-slot" onclick="quickSearch('${city}')"><span class="slot-rank">${i+1}</span><span class="slot-city">${city}</span><span class="slot-condition">${d?getEmoji(d.condition)+' '+d.condition:''}</span><span class="slot-temp">${d?d.temperature+'°C':''}</span>${tag}</div>`;
+      }));
+      c.innerHTML=slots.join('');
+    }
+
+    function updateStats(src){stats.total++;if(src==='cache')stats.hits++;else stats.misses++;}
+    function updateNavStats(n){document.getElementById('nav-cached').textContent=n;document.getElementById('nav-hitrate').textContent=stats.total>0?Math.round(stats.hits/stats.total*100)+'%':'0%';document.getElementById('nav-evictions').textContent=stats.evictions;}
+    function updateStatsPanel(n){
+      const r=stats.total>0?Math.round(stats.hits/stats.total*100):0;
+      document.getElementById('sc-size').textContent=`${n}/5`;
+      document.getElementById('sc-hitrate').textContent=r+'%';
+      document.getElementById('sc-hits').textContent=stats.hits;
+      document.getElementById('sc-misses').textContent=stats.misses;
+      document.getElementById('sc-evictions').textContent=stats.evictions;
+      document.getElementById('sc-total').textContent=stats.total;
+      document.getElementById('cb-fill').style.width=`${(n/5)*100}%`;
+      document.getElementById('cb-pct').textContent=`${Math.round((n/5)*100)}%`;
+      document.getElementById('cb-count').innerHTML=`<strong>${n}</strong> / 5 cities`;
+    }
+
+    document.getElementById('btn-search').addEventListener('click',mainSearch);
+    document.getElementById('main-search').addEventListener('keydown',e=>{if(e.key==='Enter')mainSearch();});
+    document.getElementById('get-city').addEventListener('keydown',e=>{if(e.key==='Enter')doGet();});
+    document.getElementById('del-city').addEventListener('keydown',e=>{if(e.key==='Enter')doDel();});
+    document.addEventListener('keydown',e=>{if(e.key==='Escape')closeWeatherResult();});
+
+    refreshCache();
+    setInterval(refreshCache,5000);
+  </script>
+</body>
+</html>

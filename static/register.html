@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Memory Forecaster — Register</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,700&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bordeaux:   #461220;
+      --burnt-rose: #8c2f39;
+      --mauve:      #b23a48;
+      --blush:      #fcb9b2;
+      --peach:      #fed0bb;
+      --font-serif: 'Cormorant Garamond', Georgia, serif;
+      --font-mono:  'DM Mono', monospace;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--blush);
+      font-family: var(--font-mono);
+      color: var(--bordeaux);
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      position: relative; overflow: hidden;
+    }
+    .blob { position: fixed; border-radius: 50%; filter: blur(70px); pointer-events: none; z-index: 0; }
+    .blob-1 { width: 400px; height: 400px; background: var(--peach); opacity: 0.6; top: -100px; right: -80px; animation: drift 16s ease-in-out infinite alternate; }
+    .blob-2 { width: 300px; height: 300px; background: rgba(178,58,72,0.12); bottom: -60px; left: -60px; animation: drift 12s ease-in-out infinite alternate-reverse; }
+    .blob-3 { width: 220px; height: 220px; background: rgba(252,185,178,0.35); top: 55%; left: 20%; animation: drift 8s ease-in-out infinite alternate; }
+    @keyframes drift { from{transform:translate(0,0) scale(1);}to{transform:translate(20px,16px) scale(1.05);} }
+    body::before {
+      content:''; position:fixed; inset:0; z-index:1; pointer-events:none;
+      background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      background-size:200px;
+    }
+    .card {
+      position:relative; z-index:10;
+      width:100%; max-width:440px;
+      background:rgba(252,185,178,0.45);
+      border:1px solid rgba(254,208,187,0.8);
+      border-radius:20px; padding:50px 44px;
+      backdrop-filter:blur(20px);
+      box-shadow:0 8px 32px rgba(70,18,32,0.12), 0 1px 0 rgba(255,255,255,0.55) inset;
+      animation:cardUp 0.6s cubic-bezier(0.22,1,0.36,1);
+    }
+    @keyframes cardUp { from{opacity:0;transform:translateY(28px) scale(0.97);}to{opacity:1;transform:translateY(0) scale(1);} }
+
+    .brand { display:flex; align-items:center; gap:13px; margin-bottom:36px; }
+    .brand-mark { width:42px; height:42px; border-radius:12px; background:var(--bordeaux); display:flex; align-items:center; justify-content:center; color:var(--peach); font-size:1.2rem; box-shadow:0 4px 14px rgba(70,18,32,0.3); animation:pulse 4s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{box-shadow:0 4px 14px rgba(70,18,32,0.3);}50%{box-shadow:0 4px 22px rgba(70,18,32,0.5);} }
+    .brand-name { font-family:var(--font-serif); font-size:1.2rem; font-weight:700; color:var(--bordeaux); }
+    .brand-sub  { font-size:0.52rem; letter-spacing:0.3em; color:var(--mauve); opacity:0.7; }
+
+    h1 { font-family:var(--font-serif); font-size:2.2rem; font-weight:700; font-style:italic; color:var(--bordeaux); margin-bottom:6px; line-height:1; }
+    .subtitle { font-size:0.7rem; color:var(--burnt-rose); opacity:0.75; margin-bottom:30px; }
+
+    .field { margin-bottom:16px; }
+    label { display:block; font-size:0.56rem; letter-spacing:0.28em; color:var(--mauve); margin-bottom:8px; text-transform:uppercase; font-weight:500; }
+    input[type="text"], input[type="password"] {
+      width:100%; background:rgba(255,255,255,0.5);
+      border:1.5px solid rgba(178,58,72,0.22); border-radius:10px;
+      color:var(--bordeaux); font-family:var(--font-mono); font-size:0.88rem;
+      padding:13px 16px; outline:none;
+      transition:border-color 0.25s, background 0.25s, box-shadow 0.25s;
+    }
+    input:focus { border-color:var(--burnt-rose); background:rgba(255,255,255,0.75); box-shadow:0 0 0 3px rgba(140,47,57,0.1); }
+    input::placeholder { color:rgba(178,58,72,0.35); }
+
+    .strength-wrap { height:3px; background:rgba(178,58,72,0.1); border-radius:2px; margin-top:8px; overflow:hidden; }
+    .strength-bar  { height:100%; width:0%; border-radius:2px; transition:width 0.3s, background 0.3s; }
+    .strength-lbl  { font-size:0.55rem; margin-top:5px; color:var(--burnt-rose); }
+
+    .btn-submit {
+      width:100%; background:var(--bordeaux); border:none;
+      color:var(--peach); font-family:var(--font-mono); font-size:0.72rem;
+      font-weight:500; letter-spacing:0.25em; padding:15px; border-radius:10px;
+      cursor:pointer; margin-top:8px;
+      transition:background 0.2s, transform 0.15s, box-shadow 0.2s;
+      box-shadow:0 4px 16px rgba(70,18,32,0.25);
+    }
+    .btn-submit:hover { background:var(--burnt-rose); transform:translateY(-2px); }
+
+    .divider { display:flex; align-items:center; gap:12px; margin:22px 0; }
+    .divider::before,.divider::after { content:''; flex:1; height:1px; background:rgba(178,58,72,0.2); }
+    .divider span { font-size:0.58rem; color:rgba(178,58,72,0.45); letter-spacing:0.1em; }
+
+    .link-row { text-align:center; font-size:0.68rem; color:var(--burnt-rose); opacity:0.8; }
+    .link-row a { color:var(--bordeaux); font-weight:500; text-decoration:none; border-bottom:1px solid rgba(70,18,32,0.25); padding-bottom:1px; transition:all 0.2s; }
+    .link-row a:hover { opacity:1; }
+
+    .error-msg, .success-msg { border-radius:8px; padding:10px 14px; font-size:0.68rem; margin-bottom:16px; display:none; }
+    .error-msg   { background:rgba(178,58,72,0.1); border:1px solid rgba(178,58,72,0.3); color:var(--mauve); }
+    .success-msg { background:rgba(255,255,255,0.4); border:1px solid rgba(70,18,32,0.25); color:var(--bordeaux); }
+  </style>
+</head>
+<body>
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+
+  <div class="card">
+    <div class="brand">
+      <div class="brand-mark">◈</div>
+      <div class="brand-text">
+        <span class="brand-name">Memory Forecaster</span>
+        <span class="brand-sub">LRU · WEATHER · ENGINE</span>
+      </div>
+    </div>
+
+    <h1>Create account</h1>
+    <p class="subtitle">Join to explore the LRU weather engine</p>
+
+    <div class="error-msg"   id="error-msg"></div>
+    <div class="success-msg" id="success-msg"></div>
+
+    <div class="field">
+      <label>Username</label>
+      <input type="text" id="reg-username" placeholder="Choose a username" autocomplete="username"/>
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="reg-password" placeholder="Min. 6 characters" oninput="checkStrength(this.value)" autocomplete="new-password"/>
+      <div class="strength-wrap"><div class="strength-bar" id="strength-bar"></div></div>
+      <div class="strength-lbl" id="strength-lbl"></div>
+    </div>
+    <div class="field">
+      <label>Confirm Password</label>
+      <input type="password" id="reg-confirm" placeholder="Repeat your password" autocomplete="new-password"/>
+    </div>
+
+    <button class="btn-submit" onclick="handleRegister()">→ CREATE ACCOUNT</button>
+
+    <div class="divider"><span>OR</span></div>
+    <div class="link-row">Already have an account? <a href="login.html">Sign in</a></div>
+  </div>
+
+  <script>
+    const USERS_KEY='mf_users',SESSION_KEY='mf_session';
+    function getUsers(){const u=JSON.parse(localStorage.getItem(USERS_KEY)||'{}');if(!u['admin']){u['admin']={password:'admin1234',role:'ADMIN',avatar:'A'};localStorage.setItem(USERS_KEY,JSON.stringify(u));}return u;}
+    function checkStrength(pw){
+      const bar=document.getElementById('strength-bar'),lbl=document.getElementById('strength-lbl');
+      if(!pw){bar.style.width='0%';lbl.textContent='';return;}
+      let s=0;if(pw.length>=6)s++;if(pw.length>=10)s++;if(/[A-Z]/.test(pw))s++;if(/[0-9]/.test(pw))s++;if(/[^A-Za-z0-9]/.test(pw))s++;
+      const L=[{w:'20%',c:'#b23a48',t:'Weak'},{w:'40%',c:'#c96040',t:'Fair'},{w:'60%',c:'#c89040',t:'Moderate'},{w:'80%',c:'#708840',t:'Strong'},{w:'100%',c:'#508040',t:'Very strong'}];
+      const l=L[Math.min(s-1,4)]||L[0];bar.style.width=l.w;bar.style.background=l.c;lbl.textContent=l.t;lbl.style.color=l.c;
+    }
+    function handleRegister(){
+      const username=document.getElementById('reg-username').value.trim().toLowerCase();
+      const password=document.getElementById('reg-password').value;
+      const confirm=document.getElementById('reg-confirm').value;
+      const err=document.getElementById('error-msg'),suc=document.getElementById('success-msg');
+      err.style.display='none';suc.style.display='none';
+      if(!username||!password||!confirm){err.textContent='⚠ Please fill in all fields.';err.style.display='block';return;}
+      if(username.length<3){err.textContent='⚠ Username must be at least 3 characters.';err.style.display='block';return;}
+      if(password.length<6){err.textContent='⚠ Password must be at least 6 characters.';err.style.display='block';return;}
+      if(password!==confirm){err.textContent='⚠ Passwords do not match.';err.style.display='block';return;}
+      const users=getUsers();
+      if(users[username]){err.textContent='⚠ Username already taken.';err.style.display='block';return;}
+      users[username]={password,role:'USER',avatar:username[0].toUpperCase()};
+      localStorage.setItem(USERS_KEY,JSON.stringify(users));
+      suc.textContent='✓ Account created! Redirecting…';suc.style.display='block';
+      setTimeout(()=>window.location.href='login.html',1400);
+    }
+    document.addEventListener('keydown',e=>{if(e.key==='Enter')handleRegister();});
+    if(localStorage.getItem(SESSION_KEY))window.location.href='index.html';
+    getUsers();
+  </script>
+</body>
+</html>
