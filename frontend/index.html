@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Memory Forecaster — Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,700&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+  <div class="grain"></div>
+
+  <nav class="navbar">
+    <div class="nav-left">
+      <div class="nav-mark">◈</div>
+      <span class="nav-brand">WeatherKV</span>
+      <span class="nav-badge">LRU CACHE</span>
+    </div>
+    <div class="nav-center">
+      <div class="nav-stat"><div class="ns-val" id="nav-cached">0</div><div class="ns-lbl">CACHED</div></div>
+      <div class="nav-sep"></div>
+      <div class="nav-stat"><div class="ns-val" id="nav-hitrate">0%</div><div class="ns-lbl">HIT RATE</div></div>
+      <div class="nav-sep"></div>
+      <div class="nav-stat"><div class="ns-val" id="nav-evictions">0</div><div class="ns-lbl">EVICTIONS</div></div>
+      <div class="nav-live"><span class="live-dot"></span><span class="live-txt">LIVE</span></div>
+    </div>
+    <div class="nav-right">
+      <div class="nav-user">
+        <div class="user-avatar" id="user-avatar">A</div>
+        <div class="user-info">
+          <div class="user-name" id="user-name">admin</div>
+          <div class="user-role" id="user-role">ADMIN</div>
+        </div>
+      </div>
+      <button class="btn-signout" onclick="signOut()">Sign Out</button>
+    </div>
+  </nav>
+
+  <div class="cache-bar-strip">
+    <span class="cb-label">LRU Cache:</span>
+    <span class="cb-count" id="cb-count"><strong>0</strong> / 5 cities</span>
+    <div class="cb-track"><div class="cb-fill" id="cb-fill"></div></div>
+    <span class="cb-pct" id="cb-pct">0%</span>
+    <span class="cb-hint">⚡ Least-searched city auto-evicted when full</span>
+  </div>
+
+  <div class="search-strip">
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="main-search" class="main-input" placeholder="Search a city — Mumbai, Delhi, Chennai…" autocomplete="off"/>
+    </div>
+    <button class="btn-get-weather" id="btn-search">Get Weather</button>
+  </div>
+
+  <div class="chip-row">
+    <button class="chip" onclick="quickSearch('bangalore')">Bangalore</button>
+    <button class="chip" onclick="quickSearch('delhi')">Delhi</button>
+    <button class="chip" onclick="quickSearch('mumbai')">Mumbai</button>
+    <button class="chip" onclick="quickSearch('hyderabad')">Hyderabad</button>
+    <button class="chip" onclick="quickSearch('chennai')">Chennai</button>
+    <button class="chip" onclick="quickSearch('kolkata')">Kolkata</button>
+    <button class="chip" onclick="quickSearch('jaipur')">Jaipur</button>
+    <button class="chip" onclick="quickSearch('pune')">Pune</button>
+    <button class="chip" onclick="quickSearch('ahmedabad')">Ahmedabad</button>
+    <button class="chip" onclick="quickSearch('lucknow')">Lucknow</button>
+  </div>
+
+  <div class="global-error" id="global-error" style="display:none;"></div>
+
+  <div class="weather-result-panel" id="weather-result-panel" style="display:none;">
+    <div class="result-header">
+      <div class="result-badge" id="result-badge"></div>
+      <button class="result-close" onclick="closeWeatherResult()">✕</button>
+    </div>
+    <div class="result-body">
+      <div class="result-left">
+        <div class="result-city" id="result-city"></div>
+        <div class="result-country" id="result-country"></div>
+        <div class="result-icon" id="result-icon"></div>
+        <div class="result-condition" id="result-condition"></div>
+        <div class="result-feels" id="result-feels"></div>
+      </div>
+      <div class="result-temp" id="result-temp"></div>
+    </div>
+    <div class="result-details">
+      <div class="detail-item">
+        <span class="detail-icon">💧</span>
+        <span class="detail-label">HUMIDITY</span>
+        <span class="detail-value" id="detail-humidity">—</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-icon">🌬️</span>
+        <span class="detail-label">WIND</span>
+        <span class="detail-value" id="detail-wind">—</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-icon">👁️</span>
+        <span class="detail-label">VISIBILITY</span>
+        <span class="detail-value" id="detail-visibility">—</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-icon">☀️</span>
+        <span class="detail-label">UV INDEX</span>
+        <span class="detail-value" id="detail-uv">—</span>
+      </div>
+    </div>
+    <div class="result-footer" id="result-footer"></div>
+  </div>
+
+  <div class="main-grid">
+
+    <div class="panel panel-get">
+      <div class="panel-header">
+        <span class="method-badge badge-get">GET</span>
+        <span class="panel-title">RETRIEVE CITY</span>
+      </div>
+      <div class="panel-body">
+        <label class="field-label">CITY (KEY)</label>
+        <input type="text" class="panel-input" id="get-city" placeholder="e.g. Mumbai"/>
+        <button class="btn-action btn-do-get" onclick="doGet()">🔍 GET</button>
+        <div class="response-box" id="get-response">Response appears here…</div>
+      </div>
+    </div>
+
+    <div class="panel panel-del">
+      <div class="panel-header">
+        <span class="method-badge badge-del">DEL</span>
+        <span class="panel-title">DELETE CITY</span>
+      </div>
+      <div class="panel-body">
+        <label class="field-label">CITY (KEY)</label>
+        <input type="text" class="panel-input" id="del-city" placeholder="e.g. Mumbai"/>
+        <button class="btn-action btn-do-del" onclick="doDel()">🗑 DELETE</button>
+        <div class="response-box" id="del-response">Response appears here…</div>
+      </div>
+    </div>
+
+    <div class="panel panel-live">
+      <div class="panel-header">
+        <span class="panel-icon">⟁</span>
+        <span class="panel-title">LRU CACHE — LIVE VIEW</span>
+        <button class="btn-flush-sm" onclick="flushCache()" title="Flush all">⊠</button>
+      </div>
+      <div class="live-legend">
+        <span><span class="dot dot-lru"></span> next evicted</span>
+        <span class="sep">|</span>
+        <span><span class="dot dot-mru"></span> most recent</span>
+        <span class="sep">|</span>
+        <span class="hint-txt">click row to re-search</span>
+      </div>
+      <div class="live-slots" id="live-slots">
+        <div class="live-empty"><div class="empty-globe">🌍</div><p>No cities cached.<br>Search a city above.</p></div>
+      </div>
+    </div>
+
+    <div class="panel panel-stats">
+      <div class="panel-header">
+        <span class="panel-icon">📊</span>
+        <span class="panel-title">CACHE STATISTICS</span>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="sc-label">CACHE SIZE</div><div class="sc-val" id="sc-size">0/5</div></div>
+        <div class="stat-card"><div class="sc-label">HIT RATE</div><div class="sc-val sc-hit" id="sc-hitrate">0%</div></div>
+        <div class="stat-card"><div class="sc-label">CACHE HITS</div><div class="sc-val sc-hit" id="sc-hits">0</div></div>
+        <div class="stat-card"><div class="sc-label">CACHE MISSES</div><div class="sc-val sc-miss" id="sc-misses">0</div></div>
+        <div class="stat-card"><div class="sc-label">LRU EVICTIONS</div><div class="sc-val sc-evict" id="sc-evictions">0</div></div>
+        <div class="stat-card"><div class="sc-label">TOTAL SEARCHES</div><div class="sc-val" id="sc-total">0</div></div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
