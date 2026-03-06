@@ -128,19 +128,3 @@ python -m pytest tests/test_cache.py -v
 - Full cache hit → miss → eviction flows via API
 
 ---
-
-## 🛠️ Bug Fixes Applied
-
-| Area | Fix |
-|------|-----|
-| `backend/main.py` | Removed duplicate `app = FastAPI()` that was discarding the cache instance |
-| `backend/main.py` | Added CORS middleware so the browser can call the API |
-| `backend/main.py` | Added missing `DELETE /cache/{city}` and `DELETE /cache` endpoints |
-| `backend/main.py` | Switched to relative imports (`.store`, `.schemas`, `.lru_cache`) so the server can be launched from the project root |
-| `backend/__init__.py` | Created empty `__init__.py` to make `backend/` a proper Python package |
-| `frontend/app.js` | Replaced `showWeatherModal()` (referenced non-existent `#modal` element) with `showWeatherResult()` that targets the actual `#weather-result-panel` |
-| `frontend/app.js` | Added missing `closeWeatherResult()` function (called from HTML but was undefined) |
-| `frontend/login.html` | Rewrote to use correct CSS class names matching `auth.css` (`.auth-card`, `.auth-wrapper`, `.btn-primary`, etc.) and correct Google Fonts |
-| `frontend/register.html` | Same class name and font fixes as login; added eye-toggle buttons and proper strength bar structure |
-| `requirements.txt` | Created with correct version pins to resolve `httpx` / `starlette` `TestClient` incompatibility |
-
