@@ -23,6 +23,15 @@ def get_cache():
     return {"cache": cache.get_cache_state()}
 
 
+@app.get("/cache/{city}")
+def get_from_cache(city: str):
+    city = city.lower()
+    data = cache.get(city)
+    if data is None:
+        raise HTTPException(status_code=404, detail=f"'{city}' is not in the cache")
+    return {"city": city, "temperature": data["temperature"], "condition": data["condition"], "source": "cache"}
+
+
 @app.delete("/cache/{city}")
 def delete_from_cache(city: str):
     city = city.lower()

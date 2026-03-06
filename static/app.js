@@ -96,18 +96,16 @@ function closeWeatherResult() {
 async function doGet() {
   const city = document.getElementById('get-city').value.trim().toLowerCase();
   if (!city) { setResponse('get-response', '⚠ Enter a city name.', 'error'); return; }
-  setResponse('get-response', 'Fetching…', '');
+  setResponse('get-response', 'Checking cache…', '');
   try {
-    const res = await fetch(`${API_BASE}/weather/${encodeURIComponent(city)}`);
-    if (res.status === 404) { setResponse('get-response', `404 — "${city}" not found.`, 'error'); return; }
+    const res = await fetch(`${API_BASE}/cache/${encodeURIComponent(city)}`);
+    if (res.status === 404) { setResponse('get-response', `❌ "${city}" is not in the cache.`, 'error'); return; }
     if (!res.ok) { setResponse('get-response', `Error ${res.status}`, 'error'); return; }
     const d = await res.json();
-    const isHit = d.source === 'cache';
     cachedData[d.city] = d;
-    updateStats(d.source);
     setResponse('get-response',
-      `${isHit ? '⚡ CACHE HIT' : '☁ CACHE MISS'}\nCity: ${d.city}  |  Temp: ${d.temperature}°C  |  ${d.condition}`,
-      isHit ? 'hit' : 'success'
+      `⚡ CACHE HIT\nCity: ${d.city}  |  Temp: ${d.temperature}°C  |  ${d.condition}`,
+      'hit'
     );
     await refreshCache();
   } catch (_) { setResponse('get-response', '⚠ API unreachable.', 'error'); }
