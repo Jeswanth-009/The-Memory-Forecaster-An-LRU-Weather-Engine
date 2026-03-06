@@ -4,67 +4,104 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Memory Forecaster — Login</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,700&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Bebas+Neue&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="auth.css" />
 </head>
 <body>
-  <div class="blob blob-1"></div>
-  <div class="blob blob-2"></div>
-  <div class="blob blob-3"></div>
+  <div class="grid-bg"></div>
+  <div class="glow glow-a"></div>
+  <div class="glow glow-b"></div>
 
-  <div class="card">
-    <div class="brand">
-      <div class="brand-mark">◈</div>
-      <div class="brand-text">
-        <span class="brand-name">Memory Forecaster</span>
-        <span class="brand-sub">LRU · WEATHER · ENGINE</span>
+  <div class="auth-wrapper">
+
+    <div class="auth-brand">
+      <span class="brand-icon">◈</span>
+      <span class="brand-name">Weather<span class="brand-kv">KV</span></span>
+      <span class="brand-tag">LRU CACHE</span>
+    </div>
+
+    <div class="auth-card">
+      <div class="card-accent-line"></div>
+      <div class="card-header">
+        <div class="card-title">WELCOME BACK</div>
+        <div class="card-sub">Sign in to access your dashboard</div>
+      </div>
+
+      <div class="auth-form">
+        <div class="auth-msg error hidden" id="error-msg"></div>
+
+        <div class="field-group">
+          <label class="field-label">USERNAME</label>
+          <div class="field-wrap">
+            <span class="field-icon">◈</span>
+            <input type="text" id="username" class="field-input" placeholder="e.g. admin" autocomplete="username"/>
+          </div>
+          <div class="field-err" id="username-err"></div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">PASSWORD</label>
+          <div class="field-wrap">
+            <span class="field-icon">🔒</span>
+            <input type="password" id="password" class="field-input" placeholder="••••••••" autocomplete="current-password"/>
+            <button type="button" class="eye-btn" id="eye-btn" onclick="togglePw()">👁</button>
+          </div>
+          <div class="field-err" id="password-err"></div>
+        </div>
+
+        <button class="btn-primary" type="button" onclick="handleLogin()">
+          <span>SIGN IN</span>
+          <span class="btn-arrow">→</span>
+        </button>
+
+        <div class="demo-hint">
+          <span class="hint-label">DEMO</span>
+          <code>admin &nbsp;/&nbsp; admin1234</code>
+        </div>
+      </div>
+
+      <div class="card-footer">
+        New here? <a href="register.html" class="link-main">Create an account →</a>
       </div>
     </div>
 
-    <h1>Welcome back</h1>
-    <p class="subtitle">Sign in to access your dashboard</p>
-
-    <div class="error-msg" id="error-msg"></div>
-
-    <div class="field">
-      <label>Username</label>
-      <input type="text" id="username" placeholder="e.g. admin" autocomplete="username"/>
-    </div>
-    <div class="field">
-      <label>Password</label>
-      <input type="password" id="password" placeholder="••••••••" autocomplete="current-password"/>
-    </div>
-
-    <button class="btn-submit" onclick="handleLogin()">→ SIGN IN</button>
-
-    <div class="divider"><span>OR</span></div>
-
-    <div class="link-row">New here? <a href="register.html">Create an account</a></div>
-
-    <div class="admin-hint">
-      <strong>Demo credentials</strong><br>
-      Username: <strong>admin</strong> &nbsp;·&nbsp; Password: <strong>admin1234</strong>
-    </div>
   </div>
 
   <script>
     const USERS_KEY = 'mf_users', SESSION_KEY = 'mf_session';
+
     function getUsers() {
       const u = JSON.parse(localStorage.getItem(USERS_KEY) || '{}');
       if (!u['admin']) { u['admin'] = { password: 'admin1234', role: 'ADMIN', avatar: 'A' }; localStorage.setItem(USERS_KEY, JSON.stringify(u)); }
       return u;
     }
+
+    function showError(msg) {
+      const el = document.getElementById('error-msg');
+      el.textContent = msg; el.classList.remove('hidden');
+    }
+    function clearError() {
+      document.getElementById('error-msg').classList.add('hidden');
+    }
+
+    function togglePw() {
+      const pw = document.getElementById('password');
+      const btn = document.getElementById('eye-btn');
+      if (pw.type === 'password') { pw.type = 'text'; btn.textContent = '🙈'; }
+      else { pw.type = 'password'; btn.textContent = '👁'; }
+    }
+
     function handleLogin() {
+      clearError();
       const username = document.getElementById('username').value.trim().toLowerCase();
       const password = document.getElementById('password').value;
-      const err = document.getElementById('error-msg');
-      if (!username || !password) { err.textContent = '⚠ Please fill in all fields.'; err.style.display = 'block'; return; }
+      if (!username || !password) { showError('⚠ Please fill in all fields.'); return; }
       const user = getUsers()[username];
-      if (!user || user.password !== password) { err.textContent = '⚠ Invalid username or password.'; err.style.display = 'block'; return; }
-      err.style.display = 'none';
+      if (!user || user.password !== password) { showError('⚠ Invalid username or password.'); return; }
       localStorage.setItem(SESSION_KEY, JSON.stringify({ username, role: user.role || 'USER', avatar: user.avatar || username[0].toUpperCase() }));
       window.location.href = 'index.html';
     }
+
     document.addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin(); });
     if (localStorage.getItem(SESSION_KEY)) window.location.href = 'index.html';
     getUsers();

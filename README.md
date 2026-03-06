@@ -1,70 +1,146 @@
-# The-Memory-Forecaster-An-LRU-Weather-Engine
-This project demonstrates a highly efficient, custom-built Least Recently Used (LRU) Cache integrated into a weather search application. It validates incoming requests using Pydantic and visualizes the cache memory in real-time.
+# The Memory Forecaster — LRU Weather Engine
 
-## 📂 Project Structure & File Assignments
+A weather search application that demonstrates a custom-built **Least Recently Used (LRU) Cache**. Every city lookup either hits the in-memory cache (fast) or misses and fetches from the mock store (slow). The dashboard visualizes the cache state, hit/miss stats, and evictions in real time.
 
-We are dividing this project into distinct files to avoid Git merge conflicts. Please only work in your assigned files!
+---
+
+## 📂 Project Structure
 
 ```text
-memory_forecaster/
+The-Memory-Forecaster-An-LRU-Weather-Engine/
 ├── backend/
-│   ├── main.py              # (Person 2 & 4) API endpoints and server setup
-│   ├── lru_cache.py         # (Person 1) Core LRU algorithm
-│   ├── schemas.py           # (Person 2) Pydantic validation models
-│   ├── store.py             # (Person 2) Mock database/dictionary of weather data
+│   ├── __init__.py          # Makes backend a proper Python package
+│   ├── main.py              # FastAPI app — all API endpoints
+│   ├── lru_cache.py         # Core LRU algorithm (HashMap + Doubly Linked List)
+│   ├── schemas.py           # Pydantic response models
+│   └── store.py             # Mock weather database (10 Indian cities)
 ├── frontend/
-│   ├── index.html           # (Person 3) Webpage layout
-│   ├── style.css            # (Person 3) Visual styling
-│   ├── app.js               # (Person 4) JavaScript fetch calls & UI updates
+│   ├── index.html           # Main dashboard (requires login)
+│   ├── login.html           # Login page
+│   ├── register.html        # Registration page
+│   ├── style.css            # Dashboard styles
+│   ├── auth.css             # Login / register styles (JetBrains Mono + Bebas Neue)
+│   └── app.js               # JS — API calls, live cache view, stats panel
+├── static/                  # Mirror of frontend/ served by FastAPI (optional)
 ├── tests/
-│   ├── test_cache.py        # (Person 1 & 4) Unit and integration tests
-├── README.md                
-├── requirements.txt         # Python dependencies (FastAPI, Uvicorn, Pydantic)
-
+│   └── test_cache.py        # 26 unit + integration tests (pytest)
+├── requirements.txt         # Python dependencies
+└── README.md
 ```
 
-## 👨‍💻 Team Responsibilities
+---
 
-### Person 1: Core Algorithm Engineer
+## 🚀 Setup & Running
 
-**Your Files:** `backend/lru_cache.py` and `tests/test_cache.py`
+### 1. Clone & install
 
-* Build the `Node` and `LRUCache` classes.
-* Implement a Hash Map + Doubly Linked List for $O(1)$ operations.
-* Methods required: `get(key)`, `put(key, value)`, `delete(key)`, and `get_cache_state()`.
-* Ensure capacity limits correctly evict the least recently used item.
+```bash
+git clone https://github.com/Jeswanth-009/The-Memory-Forecaster-An-LRU-Weather-Engine.git
+cd The-Memory-Forecaster-An-LRU-Weather-Engine
+pip install -r requirements.txt
+```
 
-### Person 2: Backend API & Data Engineer
+### 2. Start the backend
 
-**Your Files:** `backend/main.py`, `backend/schemas.py`, and `backend/store.py`
+> **Run from the project root** (not from inside `backend/`):
 
-* **`store.py`:** Create a static dictionary of 15-20 cities with mock weather data (temp, condition).
-* **`schemas.py`:** Build Pydantic classes to validate city search requests and format the outgoing JSON responses.
-* **`main.py`:** Initialize the FastAPI/Flask app, import Person 1's cache, and build the `GET /weather/{city}` route featuring the "Read-Through" cache logic.
+```bash
+uvicorn backend.main:app --reload
+```
 
-### Person 3: Frontend UI Developer
+The API starts at `http://127.0.0.1:8000`.
 
-**Your Files:** `frontend/index.html` and `frontend/style.css`
+### 3. Open the frontend
 
-* Build a clean, modern search interface.
-* Create a central "Weather Card" to display temperature and conditions.
-* Create a "Cache Memory Sidebar" to visually list the cities currently held in the backend's LRU cache.
-* Create visual badges for "⚡ Cache Hit" and "☁️ Cache Miss".
+Open `frontend/login.html` in your browser.
 
-### Person 4: Integration & QA Engineer
+**Demo credentials:** `admin` / `admin1234`
 
-**Your Files:** `frontend/app.js`, `backend/main.py` (assisting), and `tests/test_cache.py`
+---
 
-* **`app.js`:** Write the JavaScript to connect Person 3's UI to Person 2's API.
-* Handle form submissions, fetch weather data, and update the DOM.
-* Ensure the UI gracefully handles API error codes (e.g., 404 City Not Found, 422 Validation Error).
-* Write integration tests simulating full user flows.
+## 🔌 API Endpoints
 
-## 🚀 Setup Instructions
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/` | Health check |
+| `GET` | `/weather/{city}` | Fetch weather — cache hit or miss |
+| `GET` | `/cache` | Current LRU cache state (MRU → LRU order) |
+| `DELETE` | `/cache/{city}` | Evict a single city from the cache |
+| `DELETE` | `/cache` | Flush the entire cache |
 
-1. Clone the repository: `git clone <repo-url>`
-2. Navigate to the folder: `cd memory_forecaster`
-3. Install dependencies: `pip install -r requirements.txt`
-4. Run the backend server: `uvicorn backend.main:app --reload`
-5. Open `frontend/index.html` in your web browser.
+### Cache Hit/Miss flow
+
+```
+GET /weather/mumbai
+        │
+   In LRU Cache?
+   ┌────┴────┐
+  YES        NO
+   │          │
+⚡ cache     ☁ miss → fetch from store
+   │                  → insert into cache
+   │                  → evict LRU if full (>5)
+   └────┬────┘
+  return WeatherResponse
+  { city, temperature, condition, source }
+```
+
+---
+
+## 🧠 LRU Cache — How It Works
+
+Implemented in `backend/lru_cache.py` using a **HashMap + Doubly Linked List** for O(1) get, put, and delete.
+
+- **Head** = Most Recently Used (MRU)
+- **Tail** = Least Recently Used (LRU)
+- Capacity: **5 cities**
+- On every `get()` — the node is moved to the head
+- On every `put()` — new node added at head; if over capacity, tail node is evicted
+
+---
+
+## 🖥️ Frontend Features
+
+- **Auth guard** — session stored in `localStorage`; login/register with client-side user store
+- **Search bar + quick-chips** — search any of the 10 cities
+- **Weather result panel** — shows temperature, condition, and cache hit/miss badge
+- **Live Cache View** — polls `GET /cache` every 5 seconds; shows MRU/LRU tags per slot
+- **GET panel** — manually retrieve a city and see raw response
+- **DELETE panel** — manually evict a city from the cache
+- **Statistics panel** — total searches, cache hits, misses, evictions, hit rate %
+- **Flush button** — clear the entire cache instantly
+
+---
+
+## 🧪 Running Tests
+
+```bash
+# From project root
+python -m pytest tests/test_cache.py -v
+```
+
+**26 tests** covering:
+- LRU basics: get, put, update
+- Eviction order correctness
+- Capacity limits
+- Delete operations
+- API endpoints: `/`, `/weather/{city}`, `/cache`, `DELETE /cache`, `DELETE /cache/{city}`
+- Full cache hit → miss → eviction flows via API
+
+---
+
+## 🛠️ Bug Fixes Applied
+
+| Area | Fix |
+|------|-----|
+| `backend/main.py` | Removed duplicate `app = FastAPI()` that was discarding the cache instance |
+| `backend/main.py` | Added CORS middleware so the browser can call the API |
+| `backend/main.py` | Added missing `DELETE /cache/{city}` and `DELETE /cache` endpoints |
+| `backend/main.py` | Switched to relative imports (`.store`, `.schemas`, `.lru_cache`) so the server can be launched from the project root |
+| `backend/__init__.py` | Created empty `__init__.py` to make `backend/` a proper Python package |
+| `frontend/app.js` | Replaced `showWeatherModal()` (referenced non-existent `#modal` element) with `showWeatherResult()` that targets the actual `#weather-result-panel` |
+| `frontend/app.js` | Added missing `closeWeatherResult()` function (called from HTML but was undefined) |
+| `frontend/login.html` | Rewrote to use correct CSS class names matching `auth.css` (`.auth-card`, `.auth-wrapper`, `.btn-primary`, etc.) and correct Google Fonts |
+| `frontend/register.html` | Same class name and font fixes as login; added eye-toggle buttons and proper strength bar structure |
+| `requirements.txt` | Created with correct version pins to resolve `httpx` / `starlette` `TestClient` incompatibility |
 

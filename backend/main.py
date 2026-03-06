@@ -1,20 +1,43 @@
 from fastapi import FastAPI, HTTPException
-from backend.store import weather_store
-from backend.schemas import WeatherResponse
-from backend.lru_cache import LRUCache
+from fastapi.middleware.cors import CORSMiddleware
+from .store import weather_store
+from .schemas import WeatherResponse
+from .lru_cache import LRUCache
 
-
-app = FastAPI()
-
-cache = LRUCache(capacity=5)
-# TODO: integrate LRU cache when lru_cache.py is completed
 
 app = FastAPI(title="Memory Forecaster API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+cache = LRUCache(capacity=5)
 
 
 @app.get("/cache")
 def get_cache():
     return {"cache": cache.get_cache_state()}
+
+
+@app.delete("/cache/{city}")
+def delete_from_cache(city: str):
+    city = city.lower()
+    removed = cache.delete(city)
+    if not removed:
+        raise HTTPException(status_code=404, detail=f"'{city}' is not in the cache")
+    return {"message": f"'{city}' removed from cache"}
+
+
+@app.delete("/cache")
+def flush_cache():
+    keys = cache.get_cache_state()
+    for key in keys:
+        cache.delete(key)
+    return {"message": "Cache cleared", "removed": keys}
 
 
 @app.get("/")

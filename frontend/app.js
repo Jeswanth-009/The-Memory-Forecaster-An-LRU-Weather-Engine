@@ -61,7 +61,7 @@ async function fetchWeatherAndShow(city) {
     const data = await res.json();
     cachedData[data.city] = data;
     updateStats(data.source);
-    showWeatherModal(data);
+    showWeatherResult(data);
     await refreshCache();
   } catch (_) {
     showGlobalError('⚠ Cannot reach the API. Is the backend running on port 8000?');
@@ -71,20 +71,25 @@ async function fetchWeatherAndShow(city) {
 }
 
 // ─── Modal ───────────────────────────────────────────────────────
-function showWeatherModal(data) {
+function showWeatherResult(data) {
   const isHit = data.source === 'cache';
-  document.getElementById('modal-content').innerHTML = `
-    <div class="modal-badge ${isHit ? 'hit' : 'miss'}">${isHit ? '⚡ CACHE HIT' : '☁ CACHE MISS'}</div>
-    <div class="modal-city">${data.city}</div>
-    <div class="modal-condition">${getEmoji(data.condition)}&nbsp;&nbsp;${data.condition}</div>
-    <div class="modal-temp">${data.temperature}<sup>°C</sup></div>
-  `;
-  document.getElementById('modal').style.display = 'flex';
+  const cityTitle = data.city.charAt(0).toUpperCase() + data.city.slice(1);
+  document.getElementById('result-badge').textContent   = isHit ? '⚡ CACHE HIT' : '☁ CACHE MISS';
+  document.getElementById('result-badge').className     = `result-badge ${isHit ? 'hit' : 'miss'}`;
+  document.getElementById('result-city').textContent    = cityTitle;
+  document.getElementById('result-country').textContent = 'India';
+  document.getElementById('result-icon').textContent    = getEmoji(data.condition);
+  document.getElementById('result-condition').textContent = data.condition;
+  document.getElementById('result-feels').textContent   = `Feels like ${data.temperature}°C`;
+  document.getElementById('result-temp').textContent    = `${data.temperature}°C`;
+  document.getElementById('result-footer').textContent  = isHit
+    ? '⚡ Served instantly from LRU cache'
+    : '☁ Fetched from store · added to cache';
+  document.getElementById('weather-result-panel').style.display = 'block';
 }
 
-function closeModal(e) {
-  if (!e || e.target.id === 'modal' || e.target.classList.contains('modal-close'))
-    document.getElementById('modal').style.display = 'none';
+function closeWeatherResult() {
+  document.getElementById('weather-result-panel').style.display = 'none';
 }
 
 // ─── Panel: GET ──────────────────────────────────────────────────
@@ -206,7 +211,7 @@ document.getElementById('btn-search').addEventListener('click', mainSearch);
 document.getElementById('main-search').addEventListener('keydown', e => { if (e.key === 'Enter') mainSearch(); });
 document.getElementById('get-city').addEventListener('keydown',   e => { if (e.key === 'Enter') doGet(); });
 document.getElementById('del-city').addEventListener('keydown',   e => { if (e.key === 'Enter') doDel(); });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeWeatherResult(); });
 
 // ─── Init ────────────────────────────────────────────────────────
 refreshCache();
